@@ -254,7 +254,7 @@
             const grid = document.getElementById('sitesGrid');
             grid.innerHTML = '';
             
-            sitesToRender.forEach(site => {
+            sitesToRender.forEach((site, index) => {
                 const card = document.createElement('div');
                 card.className = 'site-card';
                 card.onclick = () => openSite(site.url);
@@ -262,7 +262,10 @@
                     <span class="site-icon">${site.icon}</span>
                     <div class="site-name">${site.name}</div>
                     <div class="site-url">${site.url}</div>
-                    <button class="action-btn" onclick="event.stopPropagation(); openSite('${site.url}')">접속하기</button>
+                    <div style="display: flex; gap: 5px; width: 100%; max-width: 200px;">
+                        <button class="action-btn" onclick="event.stopPropagation(); openSite('${site.url}')" style="flex: 1;">접속</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); removeSite(${index})" style="background: #dc3545; flex: 0 0 40px; padding: 8px 5px;">🗑️</button>
+                    </div>
                 `;
                 grid.appendChild(card);
             });
