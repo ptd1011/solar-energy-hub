@@ -62,6 +62,10 @@
             transform: translateY(-2px);
         }
         
+        .control-btn.add-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
         .control-btn.all-open {
             background: linear-gradient(45deg, #ff6b6b, #feca57);
             font-size: 16px;
@@ -127,23 +131,39 @@
             line-height: 1.2;
         }
         
+        .site-actions {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            max-width: 200px;
+        }
+        
         .action-btn {
             background: #007bff;
             color: white;
             border: none;
-            padding: 8px 20px;
+            padding: 8px 15px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             transition: all 0.3s ease;
-            width: 100%;
-            max-width: 120px;
+            flex: 1;
         }
         
         .action-btn:hover {
             background: #0056b3;
             transform: scale(1.05);
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            flex: 0 0 35px;
+            padding: 8px 5px;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
         }
         
         .stats {
@@ -188,6 +208,34 @@
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             font-size: 14px;
         }
+
+        /* 추가 사이트 카드 */
+        .add-site-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            min-height: 200px;
+        }
+        
+        .add-site-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.02);
+        }
+        
+        .add-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
         
         @media (max-width: 768px) {
             .sites-grid {
@@ -218,9 +266,10 @@
         <input type="text" class="search-box" id="searchBox" placeholder="🔍 사이트 검색... (Ctrl+K)" oninput="filterSites()">
         
         <div class="controls">
+            <button class="control-btn add-btn" onclick="showAddSiteForm()">➕ 사이트 추가</button>
             <button class="control-btn all-open" onclick="openAll()">🚀 모든 사이트 열기</button>
-            <button class="control-btn" onclick="openMonitoring()">📊 모니터링 사이트만</button>
-            <button class="control-btn" onclick="openManagement()">⚙️ 관리 사이트만</button>
+            <button class="control-btn" onclick="openByType('monitoring')">📊 모니터링 사이트만</button>
+            <button class="control-btn" onclick="openByType('management')">⚙️ 관리 사이트만</button>
         </div>
         
         <div class="sites-grid" id="sitesGrid"></div>
@@ -231,7 +280,8 @@
     </div>
 
     <script>
-        const sites = [
+        // 사이트 데이터 (메모리에 저장)
+        let sites = [
             { name: 'Helios 시스템', url: 'https://helios.daegunsoft.com/', icon: '☀️', type: 'management' },
             { name: 'KACO GMS', url: 'https://www.kacogms.com', icon: '⚙️', type: 'monitoring' },
             { name: 'GTC Solar', url: 'http://gtcsolar001.iptime.org', icon: '🔆', type: 'monitoring' },
@@ -250,59 +300,116 @@
 
         let filteredSites = [...sites];
 
+        // 사이트 렌더링
         function renderSites(sitesToRender = filteredSites) {
             const grid = document.getElementById('sitesGrid');
             grid.innerHTML = '';
             
+            // 기존 사이트 카드들
             sitesToRender.forEach((site, index) => {
                 const card = document.createElement('div');
                 card.className = 'site-card';
-                card.onclick = () => openSite(site.url);
                 card.innerHTML = `
                     <span class="site-icon">${site.icon}</span>
                     <div class="site-name">${site.name}</div>
                     <div class="site-url">${site.url}</div>
-                    <div style="display: flex; gap: 5px; width: 100%; max-width: 200px;">
-                        <button class="action-btn" onclick="event.stopPropagation(); openSite('${site.url}')" style="flex: 1;">접속</button>
-                        <button class="action-btn" onclick="event.stopPropagation(); removeSite(${index})" style="background: #dc3545; flex: 0 0 40px; padding: 8px 5px;">🗑️</button>
+                    <div class="site-actions">
+                        <button class="action-btn" onclick="openSite('${site.url}')">접속</button>
+                        <button class="action-btn delete-btn" onclick="deleteSite(${index})" title="삭제">🗑️</button>
                     </div>
                 `;
+                
+                // 카드 클릭으로도 접속 가능
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('action-btn') && !e.target.classList.contains('delete-btn')) {
+                        openSite(site.url);
+                    }
+                });
+                
                 grid.appendChild(card);
             });
             
+            // 사이트 추가 카드
+            const addCard = document.createElement('div');
+            addCard.className = 'add-site-card';
+            addCard.innerHTML = `
+                <div class="add-icon">➕</div>
+                <div><strong>새 사이트 추가</strong></div>
+                <div style="margin-top: 5px; font-size: 0.9em;">클릭해서 추가하기</div>
+            `;
+            addCard.onclick = showAddSiteForm;
+            grid.appendChild(addCard);
+            
+            // 통계 업데이트
             document.getElementById('totalSites').textContent = sitesToRender.length;
         }
 
+        // 사이트 열기
         function openSite(url) {
             window.open(url, '_blank');
         }
-        
+
+        // 모든 사이트 열기
         function openAll() {
-            if (confirm('모든 사이트를 열겠습니까? (총 ' + filteredSites.length + '개)')) {
+            if (confirm(`모든 사이트를 열겠습니까? (총 ${filteredSites.length}개)`)) {
                 filteredSites.forEach((site, index) => {
-                    setTimeout(() => openSite(site.url), index * 200);
+                    setTimeout(() => openSite(site.url), index * 300);
                 });
             }
         }
-        
-        function openMonitoring() {
-            const monitoringSites = sites.filter(site => site.type === 'monitoring');
-            if (confirm('모니터링 사이트 ' + monitoringSites.length + '개를 열겠습니까?')) {
-                monitoringSites.forEach((site, index) => {
-                    setTimeout(() => openSite(site.url), index * 200);
+
+        // 타입별 사이트 열기
+        function openByType(type) {
+            const typeSites = sites.filter(site => site.type === type);
+            const typeName = type === 'monitoring' ? '모니터링' : '관리';
+            
+            if (confirm(`${typeName} 사이트 ${typeSites.length}개를 열겠습니까?`)) {
+                typeSites.forEach((site, index) => {
+                    setTimeout(() => openSite(site.url), index * 300);
                 });
             }
         }
-        
-        function openManagement() {
-            const managementSites = sites.filter(site => site.type === 'management');
-            if (confirm('관리 사이트 ' + managementSites.length + '개를 열겠습니까?')) {
-                managementSites.forEach((site, index) => {
-                    setTimeout(() => openSite(site.url), index * 200);
-                });
+
+        // 사이트 추가 폼 표시
+        function showAddSiteForm() {
+            const url = prompt('🌐 새 사이트 URL을 입력하세요:\n(http:// 또는 https:// 포함)');
+            
+            if (!url) return;
+            
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('❌ 올바른 URL 형식이 아닙니다.\nhttp:// 또는 https://로 시작해야 합니다.');
+                return;
+            }
+            
+            const name = prompt('📝 사이트 이름을 입력하세요:');
+            if (!name) return;
+            
+            const icon = prompt('🎨 아이콘 이모지를 입력하세요:\n(예: ⭐, 🔥, 💫, 🌐)') || '🌐';
+            
+            const isMonitoring = confirm('📊 모니터링 사이트인가요?\n\n✅ 예: 모니터링 사이트\n❌ 아니오: 관리 사이트');
+            const type = isMonitoring ? 'monitoring' : 'management';
+            
+            // 사이트 추가
+            const newSite = { name, url, icon, type };
+            sites.push(newSite);
+            filteredSites = [...sites];
+            renderSites();
+            
+            alert(`✅ "${name}" 사이트가 성공적으로 추가되었습니다!`);
+        }
+
+        // 사이트 삭제
+        function deleteSite(index) {
+            const site = sites[index];
+            if (confirm(`🗑️ "${site.name}" 사이트를 삭제하시겠습니까?`)) {
+                sites.splice(index, 1);
+                filteredSites = [...sites];
+                renderSites();
+                alert(`✅ "${site.name}" 사이트가 삭제되었습니다.`);
             }
         }
-        
+
+        // 검색 기능
         function filterSites() {
             const searchTerm = document.getElementById('searchBox').value.toLowerCase();
             filteredSites = sites.filter(site => 
@@ -324,10 +431,10 @@
             }
         });
 
-        // 페이지 로드시 환영 메시지
+        // 페이지 로드시 초기화
         window.addEventListener('load', () => {
-            console.log('🌞 태양광 에너지 통합 허브가 로드되었습니다!');
-            console.log('단축키: Ctrl+K (검색), Ctrl+Enter (모두 열기)');
+            console.log('🌞 태양광 에너지 통합 허브 로드 완료!');
+            renderSites();
         });
 
         // 초기 렌더링
