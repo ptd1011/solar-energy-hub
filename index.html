@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>태양광 에너지 통합 허브</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            font-size: 14px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.all-open {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            font-size: 16px;
+            padding: 12px 30px;
+        }
+        
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .site-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .site-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .site-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+        }
+        
+        .site-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .site-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .site-url {
+            color: #666;
+            font-size: 0.8rem;
+            word-break: break-all;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+        
+        .action-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 120px;
+        }
+        
+        .action-btn:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            font-weight: bold;
+        }
+        
+        .search-box {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+            width: 250px;
+            margin: 0 auto 20px;
+            display: block;
+            text-align: center;
+        }
+        
+        .search-box::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .sites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>🌞 태양광 에너지 통합 허브</h1>
+        
+        <div class="stats">
+            <div class="stat-item">📊 총 <span id="totalSites">14</span>개 시스템</div>
+            <div class="stat-item">⚡ 에너지 모니터링</div>
+            <div class="stat-item">🔧 통합 관리</div>
+        </div>
+        
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍 사이트 검색... (Ctrl+K)" oninput="filterSites()">
+        
+        <div class="controls">
+            <button class="control-btn all-open" onclick="openAll()">🚀 모든 사이트 열기</button>
+            <button class="control-btn" onclick="openMonitoring()">📊 모니터링 사이트만</button>
+            <button class="control-btn" onclick="openManagement()">⚙️ 관리 사이트만</button>
+        </div>
+        
+        <div class="sites-grid" id="sitesGrid"></div>
+        
+        <div class="footer">
+            🌱 태양광 발전소 통합 관리 시스템 | 단축키: Ctrl+K (검색), Ctrl+Enter (모두 열기)
+        </div>
+    </div>
+
+    <script>
+        const sites = [
+            { name: 'Helios 시스템', url: 'https://helios.daegunsoft.com/', icon: '☀️', type: 'management' },
+            { name: 'KACO GMS', url: 'https://www.kacogms.com', icon: '⚙️', type: 'monitoring' },
+            { name: 'GTC Solar', url: 'http://gtcsolar001.iptime.org', icon: '🔆', type: 'monitoring' },
+            { name: 'SunnyPortal', url: 'https://www.sunnyportal.com/Login', icon: '🌞', type: 'monitoring' },
+            { name: '효성 PV 시스템', url: 'http://pv.hyosung.com/', icon: '⚡', type: 'management' },
+            { name: 'MRT Solar', url: 'http://solar.mrt.co.kr/', icon: '🌟', type: 'monitoring' },
+            { name: 'CA Dream 천안', url: 'http://cadreamcheonan.mobitron.co.kr', icon: '🏢', type: 'management' },
+            { name: 'CA Solar Tex', url: 'http://casolartex.mobitron.co.kr/', icon: '🏭', type: 'management' },
+            { name: 'Smart Sundy', url: 'https://smart.sundy.co.kr', icon: '💡', type: 'monitoring' },
+            { name: 'NREMS', url: 'http://www.nrems.co.kr/', icon: '📈', type: 'monitoring' },
+            { name: 'Bizking Enlighten', url: 'https://bizking.enlighten.kr/login', icon: '🔍', type: 'monitoring' },
+            { name: 'Growatt Server', url: 'https://server.growatt.com/', icon: '🌱', type: 'monitoring' },
+            { name: 'SEMS Portal', url: 'https://www.semsportal.com', icon: '🖥️', type: 'monitoring' },
+            { name: '내부 시스템', url: 'http://210.105.85.30:8888/', icon: '🏠', type: 'management' }
+        ];
+
+        let filteredSites = [...sites];
+
+        function renderSites(sitesToRender = filteredSites) {
+            const grid = document.getElementById('sitesGrid');
+            grid.innerHTML = '';
+            
+            sitesToRender.forEach(site => {
+                const card = document.createElement('div');
+                card.className = 'site-card';
+                card.onclick = () => openSite(site.url);
+                card.innerHTML = `
+                    <span class="site-icon">${site.icon}</span>
+                    <div class="site-name">${site.name}</div>
+                    <div class="site-url">${site.url}</div>
+                    <button class="action-btn" onclick="event.stopPropagation(); openSite('${site.url}')">접속하기</button>
+                `;
+                grid.appendChild(card);
+            });
+            
+            document.getElementById('totalSites').textContent = sitesToRender.length;
+        }
+
+        function openSite(url) {
+            window.open(url, '_blank');
+        }
+        
+        function openAll() {
+            if (confirm('모든 사이트를 열겠습니까? (총 ' + filteredSites.length + '개)')) {
+                filteredSites.forEach((site, index) => {
+                    setTimeout(() => openSite(site.url), index * 200);
+                });
+            }
+        }
+        
+        function openMonitoring() {
+            const monitoringSites = sites.filter(site => site.type === 'monitoring');
+            if (confirm('모니터링 사이트 ' + monitoringSites.length + '개를 열겠습니까?')) {
+                monitoringSites.forEach((site, index) => {
+                    setTimeout(() => openSite(site.url), index * 200);
+                });
+            }
+        }
+        
+        function openManagement() {
+            const managementSites = sites.filter(site => site.type === 'management');
+            if (confirm('관리 사이트 ' + managementSites.length + '개를 열겠습니까?')) {
+                managementSites.forEach((site, index) => {
+                    setTimeout(() => openSite(site.url), index * 200);
+                });
+            }
+        }
+        
+        function filterSites() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            filteredSites = sites.filter(site => 
+                site.name.toLowerCase().includes(searchTerm) || 
+                site.url.toLowerCase().includes(searchTerm)
+            );
+            renderSites(filteredSites);
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchBox').focus();
+            }
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                openAll();
+            }
+        });
+
+        // 페이지 로드시 환영 메시지
+        window.addEventListener('load', () => {
+            console.log('🌞 태양광 에너지 통합 허브가 로드되었습니다!');
+            console.log('단축키: Ctrl+K (검색), Ctrl+Enter (모두 열기)');
+        });
+
+        // 초기 렌더링
+        renderSites();
+    </script>
+</body>
+</html>
